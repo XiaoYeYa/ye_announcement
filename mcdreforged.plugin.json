@@ -1,0 +1,13 @@
+{
+	"id": "ye_announcement",
+	"version": "1.3.0",
+	"name": "Ye_announcement",
+	"description": {
+		"en_us": "Announce players when they join the game",
+		"zh_cn": "当玩家加入游戏时向其发公告"
+	},
+	"author": [
+		"XiaoYeYa"
+	],
+	"link": "https://github.com/XiaoYeYa/ye_announcement"
+}
