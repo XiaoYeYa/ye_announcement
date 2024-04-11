@@ -1,6 +1,6 @@
 {
 	"id": "ye_announcement",
-	"version": "1.3.0",
+	"version": "1.4.1",
 	"name": "Ye_announcement",
 	"description": {
 		"en_us": "Announce players when they join the game",
