@@ -2,24 +2,23 @@ from datetime import datetime
 import json
 from mcdreforged.api.all import *
 
-announcements_file = 'config\\announcements.json'
 announcements = []
 server_name = '夜之粉'
+config = {
+    'announcements': [],
+    'server_name': '夜之粉'
+}
+default_config = config.copy()
 
-def load_announcements():
+def load_announcements(server):
     global announcements, server_name
-    try:
-        with open(announcements_file, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-            announcements = data.get('announcements', [])
-            server_name = data.get('server_name', '夜之粉')
-    except FileNotFoundError:
-        announcements = []
-        server_name = '夜之粉'
+    config = server.load_config_simple('announcements.json', default_config)
+    announcements = config.get('announcements', [])
+    server_name = config.get('server_name', '夜之粉')
+    
 
-def save_announcements():
-    with open(announcements_file, 'w', encoding='utf-8') as file:
-        json.dump({'announcements': announcements, 'server_name': server_name}, file, indent=4, ensure_ascii=False)
+def save_announcements(server):
+    server.save_config_simple({'announcements': announcements, 'server_name': server_name}, 'announcements.json')
 
 def send_announcement(server, message, color="white"):
     server.execute('tellraw @a [{"text":"[%s] ","color":"gold"},{"text":"%s","color":"%s"}]' % (server_name, message, color))
@@ -30,7 +29,7 @@ def on_player_joined(server, player, info):
         server.execute('tellraw %s [{"text":"======= ","color":"white"},{"text":"[%s-公告]","color":"yellow"},{"text":" =======","color":"white"},{"text":"\\n发布时间：","color":"gray"},{"text":"%s","color":"aqua"},{"text":"\\n发布人：","color":"gray"},{"text":"%s","color":"aqua"},{"text":"\\n内容：","color":"gray"},{"text":"%s","color":"%s"},{"text":"\\n-------------","color":"white"}]' % (player, server_name, time, publisher, content, color))
 
 def on_load(server, old_module):
-    load_announcements()
+    load_announcements(server)
     server.register_help_message('!!g <公告内容>', '发布一个公告，只有服主权限可以使用')
     server.register_help_message('!!gd <序号>', '删除指定序号的公告，只有服主权限可以使用')
     server.register_help_message('!!gc <序号> <颜色>', '修改指定序号的公告颜色，只有服主权限可以使用')
@@ -46,7 +45,7 @@ def on_info(server, info):
         publisher = info.player
         time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         announcements.append((time, publisher, content, "white"))
-        save_announcements()
+        save_announcements(server)
         send_announcement(server, '%s公告已发布：%s' % (server_name, content))
     elif info.content.startswith('!!gd '):
         if not server.get_permission_level(info.player) == 4:
@@ -58,7 +57,7 @@ def on_info(server, info):
                 server.reply(info, '§c序号不存在！§a如果您不知道公告序号，请使用!!glist来查看所有公告序号。')
                 return
             del announcements[index]
-            save_announcements()
+            save_announcements(server)
             send_announcement(server, '已删除指定序号的公告', "green")
         except ValueError:
             server.reply(info, '§c请输入§a正确§c的序号！')
@@ -73,7 +72,7 @@ def on_info(server, info):
                 server.reply(info, '§c序号不存在！§a如果您不知道公告序号，请使用!!glist来查看所有公告序号。')
                 return
             announcements[index] = (announcements[index][0], announcements[index][1], announcements[index][2], color)
-            save_announcements()
+            save_announcements(server)
             send_announcement(server, '已更改指定序号的公告颜色为%s' % color, color)
         except ValueError:
             server.reply(info, '§c请输入正确的序号和颜色！')
@@ -86,5 +85,5 @@ def on_info(server, info):
         if server.get_permission_level(info.player) != 4:
             server.reply(info, '§c只有服主权限可以重载配置文件！')
             return
-        load_announcements()
+        load_announcements(server)
         server.reply(info, '§a配置文件已重新加载！')
